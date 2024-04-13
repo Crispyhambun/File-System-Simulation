@@ -164,21 +164,36 @@ class FileOperations():
         except IOError as e:
             print(f"IO Error: {e}")
 class AddFunction():
-    def create_Zip(self):
+        def create_Zip(self):
         Dir_path = dir_mn.check_dir()
         print("Directory Path:", Dir_path)  # Debugging output
+        if not Dir_path:
+            print("Error: Directory path is invalid.")
+            return
+
         try:
-            if Dir_path:
-                zip_Archive = [d for d in os.listdir(Dir_path) if os.path.join(Dir_path, d)]
-                zip_Name = input("Enter the Name of the Archive")
-                password = input("Enter the password for the archive")
+            zip_Archive = [d for d in os.listdir(Dir_path) if os.path.join(Dir_path, d)]
+            if not zip_Archive:
+                print("No files found in the directory to zip.")
+                return
 
-                with zip.ZipFile(f"{zip_Name}.zip", 'w') as zip_File:
-                    for file in zip_Archive:
-                        zip_File.write(file, os.path.basename(file))
+            zip_Name = input("Enter the Name of the Archive: ")
+            # password = input("Enter the password for the archive: ")
 
-                    zip_File.setpassword(password.encode())
-                    print(f"Archive '{zip_Name}.zip' created successfully with password.")
+            with zip.ZipFile(f"{zip_Name}.zip", 'w') as zip_File:
+                for file in zip_Archive:
+                    file_path = os.path.join(Dir_path, file)
+                    zip_File.write(file_path, os.path.basename(file))
+                # zip.set_password(password.encode())
+                print(f"Archive '{zip_Name}.zip' created successfully with password.")
+
+        except FileNotFoundError:
+            print("Error: Directory not found.")
+        except zip.BadZipFile:
+            print("Error: File is corrupt.")
+        except PermissionError:
+            print("Error: Permission denied. Check if you have the necessary permissions to access the directory.")
+
         except FileNotFoundError:
             print("Error: Directory not found.")
         except zip.BadZipFile:
