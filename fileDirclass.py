@@ -2,18 +2,23 @@ import os
 import fnmatch as fn
 import shutil as sh
 import zipfile as zip
-class file_Management():   
+class FileManagement():   
+    
     def open_file(self):
         Dir_path = dir_mn.check_dir()
         if Dir_path:
-            F_name=input("Enter the name of the file")
+            F_name = input("Enter the name of the file: ")
+            file_Path = os.path.join(Dir_path, F_name)
+            
             try:
-                file_Path = os.path.join(Dir_path,F_name)
-                with open(file_Path,"x") as f:
-                       open_f = f.read()
-                       return open_f
+                with open(file_Path, "r") as f:
+                    open_f = f.read()
+                    print("File contents:")
+                    print(open_f)
             except FileNotFoundError:
-                 print(f"file {F_name} not found ")
+                print(f"File '{F_name}' not found.")
+            except Exception as e:
+                print("Error:", e)
     def create_File(self):
         Dir_path = dir_mn.check_dir()
         try:
@@ -22,37 +27,48 @@ class file_Management():
                 if not F_name:
                     print("file must have name")
                 try:
-                    file_path = os.path.join(Dir_path,F_name)
+                    file_path = os.path.join(Dir_path, F_name)
                     with open (file_path,'x') as new_file:
                         print("File '{F_name}.txt'  created Successfully")
                 except FileExistsError:
                     print(f"File '{F_name}.txt' already Exists")
         except FileNotFoundError:
                 print("Invalid Path ",Dir_path)
+    
     def delete_File(self):
         Dir_path = dir_mn.check_dir()
         if Dir_path:
             try:
-                F_name=input("Enter file name")
-                file_Path = os.path.join(Dir_path,F_name)
+                F_name=input("Enter file name") 
+                file_Path = os.path.join(Dir_path, F_name)
                 if os.path.exists(file_Path):
                     os.remove(file_Path)
                     print("Removed file successfully")
             except FileNotFoundError as e:
                 print("Invalid or missing directories",e)
+ 
     def search_File(self):
         Dir_path = dir_mn.check_dir()
         if Dir_path:
-            F_name=input("Enter the name of the file")
-            match_files =[]
+            F_pattern = input("Enter the pattern to search (e.g., *.txt): ")
+            match_files = []
+
             try:
-                for F_name in os.listdir(Dir_path):
-                    if fn.fnmatch(F_name,'*.txt'):
-                        match_files.append(F_name)
+                for file_name in os.listdir(Dir_path):
+                    if fn.fnmatch(file_name, F_pattern):
+                        file_path = os.path.join(Dir_path, file_name)
+                        match_files.append(file_path)
+                        print(f"Matched file: {file_path}")
+
+                if not match_files:
+                    print("No files matched the pattern.")
+                    
                 return match_files
             except FileNotFoundError:
-                 print(f"File '{F_name}.txt' does not exist ")              
-class directory_Management():
+                print(f"Directory '{Dir_path}' does not exist.")
+            except Exception as e:
+                print("Error:", e)          
+class DirectoryManagement():
     def check_dir(self):
         Dir_path = input("Enter the path of the directory")
         if not os.path.exists(Dir_path):
@@ -67,25 +83,36 @@ class directory_Management():
                 return False
         else:
             return Dir_path
+    
     def remove_Path(self):
-            Dir_path = self.check_dir()
-            try:
-                if Dir_path:
-                    os.rmdir(Dir_path)
-                    print("Removed Directory successfully")
-            except FileNotFoundError as e:
-                    print("Invalid or missing directories",e)
+        Dir_path = self.check_dir()  # Assuming dir_mn is an instance of DirectoryManagement
+
+        try:
+            if Dir_path:
+                sh.rmtree(Dir_path)
+                print("Removed Directory successfully")
+        except FileNotFoundError as e:
+            print("Invalid or missing directories:", e)
+    
     def list_Directories(self):
         Dir_path = self.check_dir()
+
         if Dir_path:
             try:
-                   directories = [d for d in os.listdir(Dir_path) if os.path.join(Dir_path,d) ]
-                   return directories
-            except FileNotFoundError:
-                 print(f"{Dir_path} is invalid")
+                directories = [d for d in os.listdir(Dir_path) if os.path.isdir(os.path.join(Dir_path, d))]
+                if directories:
+                    print("List of directories:")
+                    for directory in directories:
+                        print(directory)
+                else:
+                    print("No directories found.")
+                return directories
+            except FileNotFoundError as e:
+                print(f"{Dir_path} is invalid:", e)
         else:
-             print(f"{Dir_path} is invalid")
-class file_Operations():
+            print(f"{Dir_path} is invalid")
+class FileOperations():
+
     def write_File(self):
         Dir_path = dir_mn.check_dir()
         F_name=input("Enter the name of the file")
@@ -96,6 +123,7 @@ class file_Operations():
                     Uappend.write(changes)
         except FileNotFoundError as e:
                print("No such file exists!!",e)
+
     def copy_File(self):
         F_name = input("Enter the name File to be copied ")
         file_Path= dir_mn.check_dir()
@@ -115,6 +143,7 @@ class file_Operations():
             print("Error: Source and destination paths point to the same file.")
         except IOError as e:
             print(f"IO Error: {e}")
+    
     def move_File(self):
         F_name = input("Enter the name File to be Moved ")
         file_Path= dir_mn.check_dir()
@@ -134,23 +163,99 @@ class file_Operations():
             print("Error: Source and destination paths point to the same file.")
         except IOError as e:
             print(f"IO Error: {e}")
-class add_Function():
+class AddFunction():
     def create_Zip(self):
         Dir_path = dir_mn.check_dir()
+        print("Directory Path:", Dir_path)  # Debugging output
         try:
             if Dir_path:
-                zip_Archive = [d for d in os.listdir(Dir_path) if os.path.join(Dir_path,d) ]
-                
+                zip_Archive = [d for d in os.listdir(Dir_path) if os.path.join(Dir_path, d)]
                 zip_Name = input("Enter the Name of the Archive")
-                with zip.ZipFile(zip_Name,'.zip','w') as zip_File:
+                password = input("Enter the password for the archive")
+
+                with zip.ZipFile(f"{zip_Name}.zip", 'w') as zip_File:
                     for file in zip_Archive:
-                       new_Zip = zip_File.write(file,os.path.basename(file))
-                with zip.ZipFiel(zip) as zi:
-                    print(f"Archive '{zip_Name}.zip' made sucessfully")
-            
+                        zip_File.write(file, os.path.basename(file))
+
+                    zip_File.setpassword(password.encode())
+                    print(f"Archive '{zip_Name}.zip' created successfully with password.")
         except FileNotFoundError:
-            print("Error")
-dir_mn = directory_Management()
-cf = file_Management()
-foper = file_Operations()
-foper.copy_File()
+            print("Error: Directory not found.")
+        except zip.BadZipFile:
+            print("Error: File is corrupt.")
+        except PermissionError:
+            print("Error: Permission denied. Check if you have the necessary permissions to access the directory.")
+
+    def extract_Zip(self):
+        Dir_path = dir_mn.check_dir()  # Assuming dir_mn is an instance of DirectoryManagement
+
+        if Dir_path:
+            try:
+                Zip_path = input("Enter file path: ")
+                file_Path = os.path.join(Dir_path, Zip_path)
+
+                if not os.path.exists(file_Path):
+                    raise FileNotFoundError("File not found in the location")
+
+                dir_Extract = input("Enter directory to extract to: ")
+
+                with zip.ZipFile(file_Path, 'r') as zip_File:
+                    zip_File.extractall(dir_Extract)
+                    print("Extraction completed successfully.")
+            except FileNotFoundError as e:
+                print("Error:", e)
+            except Exception as e:
+                print("Error:", e)
+
+def main_menu():
+    print("1. Open File")
+    print("2. Create File")
+    print("3. Delete File")
+    print("4. Search File")
+    print("5. Write File")
+    print("6. Copy File")
+    print("7. Move File")
+    print("8. Create Zip Archive")
+    print("9. Extract Zip Archive")
+    print("10. List Directories")
+    print("11. Remove Directory")
+    print("12. Exit")
+
+    choice = input("Enter your choice: ")
+    return choice
+add_function = AddFunction()
+dir_mn = DirectoryManagement()
+file_management = FileManagement()
+file_operation  = FileOperations()
+
+while True:
+    choice = main_menu()
+
+    if choice == '1':
+        file_management.open_file()
+    elif choice == '2':
+        file_management.create_File()
+    elif choice == '3':
+        file_management.delete_File()
+    elif choice == '4':
+        file_management.search_File()
+    elif choice == '5':
+        file_operation.write_File()
+    elif choice == '6':
+        file_operation.copy_File()
+    elif choice == '7':
+        file_operation.move_File()
+    elif choice == '8':
+        add_function.create_Zip()
+    elif choice == '9':
+        add_function.extract_Zip()
+    elif choice == '10':
+        dir_mn.list_Directories()
+    elif choice == '11':
+        dir_mn.remove_Path()
+    elif choice == '12':
+        print("Exiting program.")
+        break
+    else:
+        print("Invalid choice. Please try again.")
+main_menu()
